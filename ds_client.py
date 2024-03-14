@@ -174,8 +174,8 @@ def direct_message(server, port, username, password, type = None, recipient = No
                 send.flush()
 
                 resp = recv.readline()
-                response_tuple = extract_messages(resp)
-                print(response_tuple.messages)
+                messages_tuple = extract_messages(resp)
+                return messages_tuple
 
         except TimeoutError as e:
             print(e)
@@ -185,6 +185,7 @@ def direct_message(server, port, username, password, type = None, recipient = No
             print('Invalid IP address')
             return False
         
+    return response_tuple
 
 def send_direct_message(server, port, token, recipient, entry):
     direct_message = {
@@ -218,4 +219,3 @@ def send_direct_message(server, port, token, recipient, entry):
     except socket.gaierror:
         print('Invalid IP address')
         return False
-    
