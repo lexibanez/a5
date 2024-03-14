@@ -140,7 +140,7 @@ def join_server(server, port, username, password):
         print('Invalid IP address')
         return False
 
-def direct_message(server, port, username, password, type= None, recipient = None, entry: str = None):
+def direct_message(server, port, username, password, type = None, recipient = None, entry: str = None):
 
     response_tuple = join_server(server, port, username, password)
 
@@ -175,7 +175,8 @@ def direct_message(server, port, username, password, type= None, recipient = Non
 
                 resp = recv.readline()
                 response_tuple = extract_messages(resp)
-                
+                print(response_tuple.messages)
+
         except TimeoutError as e:
             print(e)
             print('Try a different IP or port')
