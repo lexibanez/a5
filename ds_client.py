@@ -18,6 +18,7 @@ import socket
 import json
 import time
 from ds_protocol import extract_json, extract_messages
+from Profile import Profile
 
 
 def send(server: str, port: int, username: str,
@@ -156,6 +157,7 @@ def direct_message(server, port, username, password, type = None, recipient = No
     if entry:
         response_tuple = send_direct_message(server, port, token, recipient, entry)
         print(response_tuple.message)
+
 
     if type:
         message_request = {
