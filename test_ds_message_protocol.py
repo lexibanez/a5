@@ -1,17 +1,41 @@
+import unittest
 from ds_protocol import *
 from ds_client import *
 
-def test_direct_message():
-    server = '168.235.86.101'
-    port = 3021
+class TestDSProtocol(unittest.TestCase):
 
-    test1 = direct_message(server, port, 'lexibanez', 'passwordlol', None, 'iguess', 'hello')
+    def test_direct_message(self):
+        # Organize Phase
+        server = '168.235.86.101'  # Replace with your server IP
+        port = 3021  # Replace with server port
+        username = 'lexibanez'
+        password = 'passwordlol'
+        type1 = 'all'
+        type2 = 'new'
 
-    test2 = direct_message(server, port, 'lexibanez', 'passwordlol', None, 'lexibanez', 'hello this is a test')
 
-    test3 = direct_message(server, port, 'lexibanez', 'passwordlol', 'all')
-    
-    test4 = direct_message(server, port, 'lexibanez', 'passwordlol', 'new')
+        # Action Phase
+        result1 = direct_message(server, port, username, password, type1)
+        result2 = direct_message(server, port, username, password, type2)
 
-test_direct_message()
+        # Assert Phase
+        self.assertEqual(result1.type, 'ok')
+        self.assertEqual(result2.type, 'ok')
 
+    def test_send_direct_message(self):
+        # Organize Phase
+        server = '168.235.86.101'  # Replace with your server IP
+        port = 3021  # Replace with server port
+        username = 'lexibanez'
+        password = 'passwordlol'
+        recipient = 'lexibanez'
+        entry = 'hello this is a test message'
+
+        # Action Phase
+        result = direct_message(server, port, username, password, None, recipient, entry)
+
+        # Assert Phase
+        self.assertEqual(result.type, 'ok')
+
+if __name__ == '__main__':
+    unittest.main()
