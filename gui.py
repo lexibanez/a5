@@ -1,11 +1,11 @@
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, simpledialog, filedialog
 from typing import Text
 from ds_messenger import *
 from file_manager import *
 from Profile import *
-
-
+from ds_client import *
+# server ip: 168.235.86.101
 
 class Body(tk.Frame):
     def __init__(self, root, recipient_selected_callback=None):
@@ -147,6 +147,22 @@ class NewContactDialog(tk.simpledialog.Dialog):
         self.pwd = self.password_entry.get()
         self.server = self.server_entry.get()
 
+class CreateFileDialog(tk.simpledialog.Dialog):
+    def body(self, master):
+        self.title("Create a New Profile")
+
+        tk.Label(master, text="Enter a username:").grid(row=0)
+        tk.Label(master, text="Enter a password:").grid(row=1)
+
+        self.e1 = tk.Entry(master)
+        self.e2 = tk.Entry(master)
+
+        self.e1.grid(row=0, column=1)
+        self.e2.grid(row=1, column=1)
+        return self.e1  # initial focus
+
+    def apply(self):
+        self.result = (self.e1.get(), self.e2.get())  # or return it
 
 class MainApp(tk.Frame):
     def __init__(self, root):
@@ -156,6 +172,8 @@ class MainApp(tk.Frame):
         self.password = None
         self.server = None
         self.recipient = None
+        self.profile = None
+        self.path = None
         # You must implement this! You must configure and
         # instantiate your DirectMessenger instance after this line.
         #self.direct_messenger = ... continue!
@@ -164,7 +182,7 @@ class MainApp(tk.Frame):
         # call the _draw method to pack the widgets
         # into the root frame
         self._draw()
-        self.body.insert_contact("studentexw23") # adding one example student.
+        # self.body.insert_contact("studentexw23") # adding one example student.
 
     def send_message(self):
         # You must implement this!
@@ -181,14 +199,16 @@ class MainApp(tk.Frame):
         self.recipient = recipient
 
     def configure_server(self):
-        ud = NewContactDialog(self.root, "Configure Account", '', '', '')
-        self.username = ud.user
-        self.password = ud.pwd
+        ud = NewContactDialog(self.root, "Configure Server", '', '', '')
+        if self.username is None and self.password is None:
+            self.username = ud.user
+            self.password = ud.pwd
         self.server = ud.server
         # You must implement this!
         # You must configure and instantiate your
         # DirectMessenger instance after this line.
         self.direct_messenger = DirectMessenger(self.server, self.username, self.password)
+        self.set_profile_server(self.profile)
 
     def publish(self, message:str):
         # You must implement this!
@@ -196,16 +216,60 @@ class MainApp(tk.Frame):
 
     def check_new(self):
         # You must implement this!
-        pass
+
+        # code here
+        main.after(5000, self.check_new)
     
     def create_new_file(self):
-        pass
-    
-    def open_file(self):
-        pass
+        dialog = CreateFileDialog(self.root, "Create New Profile")
+        username, password = dialog.result
 
-    def close_file(self):
-        pass
+        if username and password:
+            directory = filedialog.askdirectory()
+
+            if directory:
+                profile = Profile(None, username, password)
+                dsu_file = Path(directory) / f'{username}.dsu'
+                dsu_file.touch()
+                profile.save_profile(str(dsu_file))
+                self.profile = profile
+                self.path = str(dsu_file)
+                self.open_file(profile)
+            else:
+                tk.messagebox.showinfo("No Directory Selected", "Please select a directory to save the file.")
+        else:
+            tk.messagebox.showwarning("Input Error", "All fields must be filled out")
+
+
+    def open_file(self, profile=None):
+        if not profile:
+            file_path = filedialog.askopenfilename(filetypes=[("DSU Files", "*.dsu")])
+            print(file_path)
+
+            if file_path:
+                profile = Profile()
+                profile.load_profile(file_path)
+                self.profile = profile
+                self.path = file_path
+
+            else:
+                tk.messagebox.showinfo("No File Selected", "Please select a file to open.")
+
+        # TODO add functionality to load messages from profile, above too
+        self.server = profile.dsuserver
+        self.username = profile.username
+        self.password = profile.password
+        self.server = profile.dsuserver
+        self.load_friends(profile)
+
+    def load_friends(self, profile):
+        friends = profile.friends
+        for friend in friends:
+            self.body.insert_contact(friend)
+
+    def set_profile_server(self, profile):
+        profile.dsuserver = self.server
+        profile.save_profile(self.path)
 
     def _draw(self):
         # Build a menu and add it to the root frame.
@@ -214,9 +278,9 @@ class MainApp(tk.Frame):
         menu_file = tk.Menu(menu_bar)
 
         menu_bar.add_cascade(menu=menu_file, label='File')
-        menu_file.add_command(label='New')
-        menu_file.add_command(label='Open...')
-        menu_file.add_command(label='Close')
+        menu_file.add_command(label='New', command=self.create_new_file)
+        menu_file.add_command(label='Open...', command=self.open_file)
+        menu_file.add_command(label='Close', command=self.close_file)
 
         settings_file = tk.Menu(menu_bar)
         menu_bar.add_cascade(menu=settings_file, label='Settings')
