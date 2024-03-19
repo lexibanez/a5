@@ -5,24 +5,39 @@ from ds_messenger import *
 from file_manager import *
 from Profile import *
 from ds_client import *
+# from ctypes import windll
 # server ip: 168.235.86.101
 
 class Body(tk.Frame):
-    def __init__(self, root, recipient_selected_callback=None):
+    def __init__(self, root, recipient_selected_callback=None, messages=None):
         tk.Frame.__init__(self, root)
         self.root = root
         self._contacts = [str]
         self._select_callback = recipient_selected_callback
+        self.messages = messages if messages else []
         # After all initialization is complete,
         # call the _draw method to pack the widgets
         # into the Body instance
         self._draw()
 
     def node_select(self, event):
-        index = int(self.posts_tree.selection()[0])
-        entry = self._contacts[index]
-        if self._select_callback is not None:
-            self._select_callback(entry)
+        # index = int(self.posts_tree.selection()[0])
+        # entry = self._contacts[index]
+        # if self._select_callback is not None:
+        #     self._select_callback(entry)
+
+        # Get the selected item
+        item = self.posts_tree.selection()[0]
+
+        # Get the text of the selected item
+        username = self.posts_tree.item(item, 'text')
+        # Filter self.messages for messages from this user
+        user_messages = [msg for msg in self.messages if msg['from'] == username]
+        user_messages = sorted(user_messages, key=lambda msg: msg['timestamp'], reverse=True)
+        self.entry_editor.delete('1.0', tk.END)
+        # Insert the user messages into the entry editor
+        for message in user_messages:
+            self.insert_contact_message(message['message'], message['timestamp'])
 
     def insert_contact(self, contact: str):
         self._contacts.append(contact)
@@ -37,7 +52,7 @@ class Body(tk.Frame):
     def insert_user_message(self, message:str):
         self.entry_editor.insert(1.0, message + '\n', 'entry-right')
 
-    def insert_contact_message(self, message:str):
+    def insert_contact_message(self, message:str, timestamp:str):
         self.entry_editor.insert(1.0, message + '\n', 'entry-left')
 
     def get_text_entry(self) -> str:
@@ -46,12 +61,22 @@ class Body(tk.Frame):
     def set_text_entry(self, text:str):
         self.message_editor.delete(1.0, tk.END)
         self.message_editor.insert(1.0, text)
+    
+    def update_messages(self, messages):
+        self.messages = messages
+
+    def clear_tree(self):
+        for id in self.posts_tree.get_children():
+            self.posts_tree.delete(id)
 
     def _draw(self):
         posts_frame = tk.Frame(master=self, width=250)
         posts_frame.pack(fill=tk.BOTH, side=tk.LEFT)
 
+        style = ttk.Style()
+        style.configure("Treeview", font=('Helvetica', 10, 'italic'))
         self.posts_tree = ttk.Treeview(posts_frame)
+        self.posts_tree.heading("#0", text="Friends") 
         self.posts_tree.bind("<<TreeviewSelect>>", self.node_select)
         self.posts_tree.pack(fill=tk.BOTH, side=tk.TOP,
                              expand=True, padx=5, pady=5)
@@ -72,7 +97,8 @@ class Body(tk.Frame):
         self.message_editor.pack(fill=tk.BOTH, side=tk.LEFT,
                                  expand=True, padx=0, pady=0)
 
-        self.entry_editor = tk.Text(editor_frame, width=0, height=5)
+        self.entry_editor = tk.Text(editor_frame, width=0, height=5, bg='seashell2')
+        self.entry_editor.configure(font=('Helvetica', 14, 'normal'))
         self.entry_editor.tag_configure('entry-right', justify='right')
         self.entry_editor.tag_configure('entry-left', justify='left')
         self.entry_editor.pack(fill=tk.BOTH, side=tk.LEFT,
@@ -174,10 +200,15 @@ class MainApp(tk.Frame):
         self.recipient = None
         self.profile = None
         self.path = None
+        self.messages = None
         # You must implement this! You must configure and
         # instantiate your DirectMessenger instance after this line.
         #self.direct_messenger = ... continue!
         self.direct_messenger = DirectMessenger()
+
+        # TODO UNCOMMENT WHEN SERVER IS BACK UP
+        # self.messages = self.direct_messenger.retrieve_all() # retrieve all messages from server
+        
         # After all initialization is complete,
         # call the _draw method to pack the widgets
         # into the root frame
@@ -193,7 +224,10 @@ class MainApp(tk.Frame):
         # Hint: check how to use tk.simpledialog.askstring to retrieve
         # the name of the new contact, and then use one of the body
         # methods to add the contact to your contact list
-        pass
+        name = tk.simpledialog.askstring("Add Contact", "Enter the name of the new contact")
+        self.body.insert_contact(name)
+        self.profile.add_friend(name)
+        self.profile.save_profile(self.path)
 
     def recipient_selected(self, recipient):
         self.recipient = recipient
@@ -208,7 +242,12 @@ class MainApp(tk.Frame):
         # You must configure and instantiate your
         # DirectMessenger instance after this line.
         self.direct_messenger = DirectMessenger(self.server, self.username, self.password)
-        self.set_profile_server(self.profile)
+
+        # retrieve all messages after configuring server
+        # TODO uncomment when server is back up
+        # self.messages = self.direct_messenger.retrieve_all()
+        if self.profile:
+            self.set_profile_server(self.profile)
 
     def publish(self, message:str):
         # You must implement this!
@@ -216,9 +255,16 @@ class MainApp(tk.Frame):
 
     def check_new(self):
         # You must implement this!
+        
+        # TODO UNCOMMENT WHEN SERVER IS BACK UP
+        # new_messages = self.direct_messenger.retrieve_new()
+        
+        # for message in new_messages:
+        #     self.messages.append(message)
+        #     self.body.update_messages(self.messages)
 
-        # code here
-        main.after(5000, self.check_new)
+        # self.after(5000, self.check_new)
+        pass
     
     def create_new_file(self):
         dialog = CreateFileDialog(self.root, "Create New Profile")
@@ -260,12 +306,22 @@ class MainApp(tk.Frame):
         self.username = profile.username
         self.password = profile.password
         self.server = profile.dsuserver
+        self.messages = profile.messages
         self.load_friends(profile)
+        print(self.messages) # DELETE LATER
+        self.body.update_messages(self.messages)
 
     def load_friends(self, profile):
+        self.body.clear_tree()
         friends = profile.friends
         for friend in friends:
             self.body.insert_contact(friend)
+    
+    def load_messages(self, message):
+        self.body.insert_user_message('message1')
+        self.body.insert_contact_message('message5')
+        self.body.insert_user_message('message2')
+        self.body.insert_contact_message('message6')
 
     def set_profile_server(self, profile):
         profile.dsuserver = self.server
@@ -280,7 +336,6 @@ class MainApp(tk.Frame):
         menu_bar.add_cascade(menu=menu_file, label='File')
         menu_file.add_command(label='New', command=self.create_new_file)
         menu_file.add_command(label='Open...', command=self.open_file)
-        menu_file.add_command(label='Close', command=self.close_file)
 
         settings_file = tk.Menu(menu_bar)
         menu_bar.add_cascade(menu=settings_file, label='Settings')
@@ -288,11 +343,15 @@ class MainApp(tk.Frame):
                                   command=self.add_contact)
         settings_file.add_command(label='Login to Server',
                                   command=self.configure_server)
+        tk.messagebox.showinfo("Welcome to DS Messenger", "Please "
+                               "create a new profile or open an existing "
+                               "one. Before you send a message, "
+                               "please configure the server address.")
 
         # The Body and Footer classes must be initialized and
         # packed into the root window.
         self.body = Body(self.root,
-                         recipient_selected_callback=self.recipient_selected)
+                         recipient_selected_callback=self.recipient_selected, messages=self.messages)
         self.body.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
         self.footer = Footer(self.root, send_callback=self.send_message)
         self.footer.pack(fill=tk.BOTH, side=tk.BOTTOM)
@@ -302,6 +361,9 @@ if __name__ == "__main__":
     # All Tkinter programs start with a root window. We will name ours 'main'.
     main = tk.Tk()
 
+    style = ttk.Style(main)
+    style.theme_use('clam')
+    # windll.shcore.SetProcessDpiAwareness(1)
     # 'title' assigns a text value to the Title Bar area of a window.
     main.title("ICS 32 Distributed Social Messenger")
 
