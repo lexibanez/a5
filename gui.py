@@ -1,10 +1,11 @@
+import json
+import time
 import tkinter as tk
 from tkinter import ttk, simpledialog, filedialog
 from typing import Text
 from ds_messenger import *
-from file_manager import *
 from Profile import *
-from ds_client import *
+
 # from ctypes import windll
 # server ip: 168.235.86.101
 
@@ -14,30 +15,29 @@ class Body(tk.Frame):
         self.root = root
         self._contacts = [str]
         self._select_callback = recipient_selected_callback
-        self.messages = messages if messages else []
+        self.messages = []
         # After all initialization is complete,
         # call the _draw method to pack the widgets
         # into the Body instance
         self._draw()
 
-    def node_select(self, event):
-        # index = int(self.posts_tree.selection()[0])
-        # entry = self._contacts[index]
-        # if self._select_callback is not None:
-        #     self._select_callback(entry)
-
+    def node_select(self, event=None):
         # Get the selected item
         item = self.posts_tree.selection()[0]
-
         # Get the text of the selected item
         username = self.posts_tree.item(item, 'text')
         # Filter self.messages for messages from this user
-        user_messages = [msg for msg in self.messages if msg['from'] == username]
+        user_messages = [msg for msg in self.messages if msg.get('from') == username or msg.get('to') == username]
         user_messages = sorted(user_messages, key=lambda msg: msg['timestamp'], reverse=True)
         self.entry_editor.delete('1.0', tk.END)
         # Insert the user messages into the entry editor
         for message in user_messages:
-            self.insert_contact_message(message['message'], message['timestamp'])
+            if message.get('from') == username:
+                self.insert_contact_message(message['message'])
+            else:
+                self.insert_user_message(message['message'])
+
+        # self.after(2000, self.node_select)
 
     def insert_contact(self, contact: str):
         self._contacts.append(contact)
@@ -52,7 +52,7 @@ class Body(tk.Frame):
     def insert_user_message(self, message:str):
         self.entry_editor.insert(1.0, message + '\n', 'entry-right')
 
-    def insert_contact_message(self, message:str, timestamp:str):
+    def insert_contact_message(self, message:str):
         self.entry_editor.insert(1.0, message + '\n', 'entry-left')
 
     def get_text_entry(self) -> str:
@@ -64,6 +64,9 @@ class Body(tk.Frame):
     
     def update_messages(self, messages):
         self.messages = messages
+    
+    def add_new_message(self, message):
+        self.messages.append(message)
 
     def clear_tree(self):
         for id in self.posts_tree.get_children():
@@ -94,6 +97,7 @@ class Body(tk.Frame):
         message_frame.pack(fill=tk.BOTH, side=tk.TOP, expand=False)
 
         self.message_editor = tk.Text(message_frame, width=0, height=5)
+        # self.message_editor.configure(font=('Helvetica', 14, 'bold'))
         self.message_editor.pack(fill=tk.BOTH, side=tk.LEFT,
                                  expand=True, padx=0, pady=0)
 
@@ -123,7 +127,7 @@ class Footer(tk.Frame):
             self._send_callback()
 
     def _draw(self):
-        save_button = tk.Button(master=self, text="Send", width=20)
+        save_button = tk.Button(master=self, text="Send", width=20, command=self.send_click)
         # You must implement this.
         # Here you must configure the button to bind its click to
         # the send_click() function.
@@ -133,45 +137,45 @@ class Footer(tk.Frame):
         self.footer_label.pack(fill=tk.BOTH, side=tk.LEFT, padx=5)
 
 
-class NewContactDialog(tk.simpledialog.Dialog):
-    def __init__(self, root, title=None, user=None, pwd=None, server=None):
-        self.root = root
-        self.server = server
-        self.user = user
-        self.pwd = pwd
-        super().__init__(root, title)
+# class NewContactDialog(tk.simpledialog.Dialog):
+#     def __init__(self, root, title=None, user=None, pwd=None, server=None):
+#         self.root = root
+#         self.server = server
+#         self.user = user
+#         self.pwd = pwd
+#         super().__init__(root, title)
 
-    def body(self, frame):
-        self.server_label = tk.Label(frame, width=30, text="DS Server Address")
-        self.server_label.pack()
-        self.server_entry = tk.Entry(frame, width=30)
-        self.server_entry.insert(tk.END, self.server)
-        self.server_entry.pack()
+#     def body(self, frame):
+#         self.server_label = tk.Label(frame, width=30, text="DS Server Address")
+#         self.server_label.pack()
+#         self.server_entry = tk.Entry(frame, width=30)
+#         self.server_entry.insert(tk.END, self.server)
+#         self.server_entry.pack()
 
-        self.username_label = tk.Label(frame, width=30, text="Username")
-        self.username_label.pack()
-        self.username_entry = tk.Entry(frame, width=30)
-        self.username_entry.insert(tk.END, self.user)
-        self.username_entry.pack()
+#         self.username_label = tk.Label(frame, width=30, text="Username")
+#         self.username_label.pack()
+#         self.username_entry = tk.Entry(frame, width=30)
+#         self.username_entry.insert(tk.END, self.user)
+#         self.username_entry.pack()
 
-        # You need to implement also the region for the user to enter
-        # the Password. The code is similar to the Username you see above
-        # but you will want to add self.password_entry['show'] = '*'
-        # such that when the user types, the only thing that appears are
-        # * symbols.
-        #self.password...
-        self.password_label = tk.Label(frame, width=30, text="Password")
-        self.password_label.pack()
-        self.password_entry = tk.Entry(frame, width=30)
-        self.password_entry['show'] = '*'
-        self.password_entry.insert(tk.END, self.pwd)
-        self.password_entry.pack()
+#         # You need to implement also the region for the user to enter
+#         # the Password. The code is similar to the Username you see above
+#         # but you will want to add self.password_entry['show'] = '*'
+#         # such that when the user types, the only thing that appears are
+#         # * symbols.
+#         #self.password...
+#         self.password_label = tk.Label(frame, width=30, text="Password")
+#         self.password_label.pack()
+#         self.password_entry = tk.Entry(frame, width=30)
+#         self.password_entry['show'] = '*'
+#         self.password_entry.insert(tk.END, self.pwd)
+#         self.password_entry.pack()
         
 
-    def apply(self):
-        self.user = self.username_entry.get()
-        self.pwd = self.password_entry.get()
-        self.server = self.server_entry.get()
+#     def apply(self):
+#         self.user = self.username_entry.get()
+#         self.pwd = self.password_entry.get()
+#         self.server = self.server_entry.get()
 
 class CreateFileDialog(tk.simpledialog.Dialog):
     def body(self, master):
@@ -179,16 +183,20 @@ class CreateFileDialog(tk.simpledialog.Dialog):
 
         tk.Label(master, text="Enter a username:").grid(row=0)
         tk.Label(master, text="Enter a password:").grid(row=1)
+        tk.Label(master, text="Enter a server IP:").grid(row=2)
+        
 
         self.e1 = tk.Entry(master)
         self.e2 = tk.Entry(master)
+        self.e3 = tk.Entry(master)
 
         self.e1.grid(row=0, column=1)
         self.e2.grid(row=1, column=1)
+        self.e3.grid(row=2, column=1)
         return self.e1  # initial focus
 
     def apply(self):
-        self.result = (self.e1.get(), self.e2.get())  # or return it
+        self.result = (self.e1.get(), self.e2.get(), self.e3.get())  # or return it
 
 class MainApp(tk.Frame):
     def __init__(self, root):
@@ -213,12 +221,50 @@ class MainApp(tk.Frame):
         # call the _draw method to pack the widgets
         # into the root frame
         self._draw()
-        # self.body.insert_contact("studentexw23") # adding one example student.
 
     def send_message(self):
-        # You must implement this!
-        pass
+        recipient = self.get_recipient_from_gui()
+        if not recipient:
+            return
+        message = self.body.get_text_entry()
+        
+        server_status = self.check_for_server()
+        if not server_status:
+            return
 
+        status = self.direct_messenger.send(str(message), str(recipient))
+        print(status)
+        if status:
+            self.body.message_editor.delete("1.0", tk.END)
+            message_dict = {
+                "message": message,
+                "to": recipient,
+                "timestamp": str(time.time())}
+            self.profile.add_message(message_dict) # add the message to the dsu file
+            self.profile.save_profile(self.path) # save the message to the dsu file
+            self.messages.append(message_dict) # add the message to the messages list
+            self.body.add_new_message(message_dict) # add the message to the body class
+            return
+        else:
+            tk.messagebox.showerror("Error", "Message failed to send. Please try again later.")
+            return
+
+
+    def get_recipient_from_gui(self):
+        selected_items = self.body.posts_tree.selection()
+        if not selected_items:
+            tk.messagebox.showerror("Error", "No friend selected. Please select a friend from the contact list.")
+            return False
+        recipient = self.body.posts_tree.item(selected_items[0], 'text')
+        return str(recipient)
+    
+    def check_for_server(self):
+        if self.direct_messenger and self.direct_messenger.dsuserver:
+            return True
+        else:
+            tk.messagebox.showerror("Error", "Please configure the server before sending a message.")
+            return False
+        
     def add_contact(self):
         # You must implement this!
         # Hint: check how to use tk.simpledialog.askstring to retrieve
@@ -232,49 +278,55 @@ class MainApp(tk.Frame):
     def recipient_selected(self, recipient):
         self.recipient = recipient
 
-    def configure_server(self):
-        ud = NewContactDialog(self.root, "Configure Server", '', '', '')
-        if self.username is None and self.password is None:
-            self.username = ud.user
-            self.password = ud.pwd
-        self.server = ud.server
-        # You must implement this!
-        # You must configure and instantiate your
-        # DirectMessenger instance after this line.
-        self.direct_messenger = DirectMessenger(self.server, self.username, self.password)
+    # def configure_server(self):
+    #     ud = NewContactDialog(self.root, "Configure Server", '', '', '')
+    #     if self.username is None and self.password is None:
+    #         self.username = ud.user
+    #         self.password = ud.pwd
+    #     self.server = ud.server
+    #     self.direct_messenger.dsuserver = self.server
 
-        # retrieve all messages after configuring server
-        # TODO uncomment when server is back up
-        # self.messages = self.direct_messenger.retrieve_all()
-        if self.profile:
-            self.set_profile_server(self.profile)
+    #     # retrieve all messages after configuring server
+    #     # messages = self.direct_messenger.retrieve_all()
+    #     # self.messages = messages
+    #     # self.load_friends_from_messages(messages)
+    #     # self.profile.add_all_messages(messages)
+    #     # self.profile.save_profile(self.path)
+    #     # self.load_friends(self.profile)
 
-    def publish(self, message:str):
-        # You must implement this!
-        pass
+    #     if self.profile:
+    #         self.set_profile_server(self.profile)
 
     def check_new(self):
         # You must implement this!
         
-        # TODO UNCOMMENT WHEN SERVER IS BACK UP
-        # new_messages = self.direct_messenger.retrieve_new()
-        
-        # for message in new_messages:
-        #     self.messages.append(message)
-        #     self.body.update_messages(self.messages)
+        if self.direct_messenger.dsuserver:
+            new_messages = self.direct_messenger.retrieve_new()
+            print(new_messages)
+            if new_messages:
+                for message in new_messages:
+                    self.messages.append(message) # update messages list in main class
+                    self.profile.add_message(message) # add the message to the dsu file 
 
-        # self.after(5000, self.check_new)
-        pass
-    
+                    # check if the sender of the message is in the friends list
+                    if message['from'] not in self.profile.friends:
+                        self.profile.add_friend(message['from']) # add the sender to the friends list
+                        self.body.insert_contact(message['from']) # add the sender to body class GUI
+
+                    self.profile.save_profile(self.path) # save new message and friend to dsu file
+                    self.body.add_new_message(message) # add the message to the body class
+        
+        self.after(2000, self.check_new)
+
     def create_new_file(self):
         dialog = CreateFileDialog(self.root, "Create New Profile")
-        username, password = dialog.result
+        username, password, server = dialog.result
 
         if username and password:
             directory = filedialog.askdirectory()
 
             if directory:
-                profile = Profile(None, username, password)
+                profile = Profile(server, username, password)
                 dsu_file = Path(directory) / f'{username}.dsu'
                 dsu_file.touch()
                 profile.save_profile(str(dsu_file))
@@ -290,7 +342,6 @@ class MainApp(tk.Frame):
     def open_file(self, profile=None):
         if not profile:
             file_path = filedialog.askopenfilename(filetypes=[("DSU Files", "*.dsu")])
-            print(file_path)
 
             if file_path:
                 profile = Profile()
@@ -301,15 +352,15 @@ class MainApp(tk.Frame):
             else:
                 tk.messagebox.showinfo("No File Selected", "Please select a file to open.")
 
-        # TODO add functionality to load messages from profile, above too
-        self.server = profile.dsuserver
+        self.server = profile.dsuserver # set server, usrnm, pw, server, of class
         self.username = profile.username
         self.password = profile.password
         self.server = profile.dsuserver
-        self.messages = profile.messages
-        self.load_friends(profile)
-        print(self.messages) # DELETE LATER
-        self.body.update_messages(self.messages)
+        self.messages = profile.messages # add the messages from the profile to the messages list
+        self.direct_messenger = DirectMessenger(self.server, self.username, self.password)
+        self.check_new() # start checking for new messages
+        self.load_friends(profile) # load friends from profile
+        self.body.update_messages(self.messages) # update messages in body class
 
     def load_friends(self, profile):
         self.body.clear_tree()
@@ -322,6 +373,12 @@ class MainApp(tk.Frame):
         self.body.insert_contact_message('message5')
         self.body.insert_user_message('message2')
         self.body.insert_contact_message('message6')
+
+    def load_friends_from_messages(self, messages):
+        senders = set(message['from'] for message in messages)
+        senders = list(senders)
+        self.profile.configure_friends(senders)
+        
 
     def set_profile_server(self, profile):
         profile.dsuserver = self.server
@@ -341,8 +398,8 @@ class MainApp(tk.Frame):
         menu_bar.add_cascade(menu=settings_file, label='Settings')
         settings_file.add_command(label='Add Contact',
                                   command=self.add_contact)
-        settings_file.add_command(label='Login to Server',
-                                  command=self.configure_server)
+        # settings_file.add_command(label='Login to Server',
+        #                           command=self.configure_server)
         tk.messagebox.showinfo("Welcome to DS Messenger", "Please "
                                "create a new profile or open an existing "
                                "one. Before you send a message, "
@@ -390,8 +447,8 @@ if __name__ == "__main__":
     # behavior of the window changes.
     main.update()
     main.minsize(main.winfo_width(), main.winfo_height())
-    id = main.after(2000, app.check_new)
-    print(id)
+    # id = main.after(2000, app.check_new)
+    # print(id)
     # And finally, start up the event loop for the program (you can find
     # more on this in lectures of week 9 and 10).
     main.mainloop()

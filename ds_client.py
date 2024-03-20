@@ -157,6 +157,7 @@ def direct_message(server, port, username, password, type = None, recipient = No
     if entry:
         response_tuple = send_direct_message(server, port, token, recipient, entry)
         print(response_tuple.message)
+        return response_tuple
 
 
     if type:
@@ -186,8 +187,7 @@ def direct_message(server, port, username, password, type = None, recipient = No
         except socket.gaierror:
             print('Invalid IP address')
             return False
-        
-    return response_tuple
+
 
 def send_direct_message(server, port, token, recipient, entry):
     direct_message = {

@@ -22,11 +22,13 @@ class DirectMessenger:
         self.username = username
         self.password = password
             
-    def send(self, message:str, recipient:str) -> bool:
+    def send(self, message, recipient) -> bool:
         # must return true if message successfully sent, false if send failed.
         response_tuple = direct_message(self.dsuserver, self.port, self.username, self.password, None, recipient, message)
+
         if response_tuple.type == 'error':
             return False
+        
         return True
             
     def retrieve_new(self) -> list:
