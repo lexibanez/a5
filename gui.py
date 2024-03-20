@@ -5,6 +5,7 @@ from tkinter import ttk, simpledialog, filedialog
 from typing import Text
 from ds_messenger import *
 from Profile import *
+from ds_client import join_server
 
 # from ctypes import windll
 # server ip: 168.235.86.101
@@ -22,6 +23,7 @@ class Body(tk.Frame):
         self._draw()
 
     def node_select(self, event=None):
+        self.remove_duplicate_msgs()
         # Get the selected item
         item = self.posts_tree.selection()[0]
         # Get the text of the selected item
@@ -37,7 +39,7 @@ class Body(tk.Frame):
             else:
                 self.insert_user_message(message['message'])
 
-        # self.after(2000, self.node_select)
+        self.after(2000, self.node_select)
 
     def insert_contact(self, contact: str):
         self._contacts.append(contact)
@@ -71,6 +73,10 @@ class Body(tk.Frame):
     def clear_tree(self):
         for id in self.posts_tree.get_children():
             self.posts_tree.delete(id)
+
+    def remove_duplicate_msgs(self):
+        message_strs = set(json.dumps(m, sort_keys=True) for m in self.messages)
+        self.messages = [json.loads(s) for s in message_strs]
 
     def _draw(self):
         posts_frame = tk.Frame(master=self, width=250)
@@ -136,47 +142,6 @@ class Footer(tk.Frame):
         self.footer_label = tk.Label(master=self, text="Ready.")
         self.footer_label.pack(fill=tk.BOTH, side=tk.LEFT, padx=5)
 
-
-# class NewContactDialog(tk.simpledialog.Dialog):
-#     def __init__(self, root, title=None, user=None, pwd=None, server=None):
-#         self.root = root
-#         self.server = server
-#         self.user = user
-#         self.pwd = pwd
-#         super().__init__(root, title)
-
-#     def body(self, frame):
-#         self.server_label = tk.Label(frame, width=30, text="DS Server Address")
-#         self.server_label.pack()
-#         self.server_entry = tk.Entry(frame, width=30)
-#         self.server_entry.insert(tk.END, self.server)
-#         self.server_entry.pack()
-
-#         self.username_label = tk.Label(frame, width=30, text="Username")
-#         self.username_label.pack()
-#         self.username_entry = tk.Entry(frame, width=30)
-#         self.username_entry.insert(tk.END, self.user)
-#         self.username_entry.pack()
-
-#         # You need to implement also the region for the user to enter
-#         # the Password. The code is similar to the Username you see above
-#         # but you will want to add self.password_entry['show'] = '*'
-#         # such that when the user types, the only thing that appears are
-#         # * symbols.
-#         #self.password...
-#         self.password_label = tk.Label(frame, width=30, text="Password")
-#         self.password_label.pack()
-#         self.password_entry = tk.Entry(frame, width=30)
-#         self.password_entry['show'] = '*'
-#         self.password_entry.insert(tk.END, self.pwd)
-#         self.password_entry.pack()
-        
-
-#     def apply(self):
-#         self.user = self.username_entry.get()
-#         self.pwd = self.password_entry.get()
-#         self.server = self.server_entry.get()
-
 class CreateFileDialog(tk.simpledialog.Dialog):
     def body(self, master):
         self.title("Create a New Profile")
@@ -214,8 +179,6 @@ class MainApp(tk.Frame):
         #self.direct_messenger = ... continue!
         self.direct_messenger = DirectMessenger()
 
-        # TODO UNCOMMENT WHEN SERVER IS BACK UP
-        # self.messages = self.direct_messenger.retrieve_all() # retrieve all messages from server
         
         # After all initialization is complete,
         # call the _draw method to pack the widgets
@@ -241,6 +204,7 @@ class MainApp(tk.Frame):
                 "to": recipient,
                 "timestamp": str(time.time())}
             self.profile.add_message(message_dict) # add the message to the dsu file
+            self.profile.remove_duplicate_messages() # remove duplicate messages from the dsu file
             self.profile.save_profile(self.path) # save the message to the dsu file
             self.messages.append(message_dict) # add the message to the messages list
             self.body.add_new_message(message_dict) # add the message to the body class
@@ -278,25 +242,6 @@ class MainApp(tk.Frame):
     def recipient_selected(self, recipient):
         self.recipient = recipient
 
-    # def configure_server(self):
-    #     ud = NewContactDialog(self.root, "Configure Server", '', '', '')
-    #     if self.username is None and self.password is None:
-    #         self.username = ud.user
-    #         self.password = ud.pwd
-    #     self.server = ud.server
-    #     self.direct_messenger.dsuserver = self.server
-
-    #     # retrieve all messages after configuring server
-    #     # messages = self.direct_messenger.retrieve_all()
-    #     # self.messages = messages
-    #     # self.load_friends_from_messages(messages)
-    #     # self.profile.add_all_messages(messages)
-    #     # self.profile.save_profile(self.path)
-    #     # self.load_friends(self.profile)
-
-    #     if self.profile:
-    #         self.set_profile_server(self.profile)
-
     def check_new(self):
         # You must implement this!
         
@@ -313,14 +258,18 @@ class MainApp(tk.Frame):
                         self.profile.add_friend(message['from']) # add the sender to the friends list
                         self.body.insert_contact(message['from']) # add the sender to body class GUI
 
-                    self.profile.save_profile(self.path) # save new message and friend to dsu file
                     self.body.add_new_message(message) # add the message to the body class
+                self.profile.remove_duplicate_messages() # remove duplicate messages from the dsu file
+                self.profile.save_profile(self.path) # save new message and friend to dsu file
         
         self.after(2000, self.check_new)
 
     def create_new_file(self):
         dialog = CreateFileDialog(self.root, "Create New Profile")
         username, password, server = dialog.result
+        response = join_server(server, 3021, username, password)
+        if response.message == 'Invalid password or username already taken':
+            return tk.messagebox.showerror("Error", "Invalid password or username already taken")
 
         if username and password:
             directory = filedialog.askdirectory()
@@ -351,6 +300,7 @@ class MainApp(tk.Frame):
 
             else:
                 tk.messagebox.showinfo("No File Selected", "Please select a file to open.")
+                return
 
         self.server = profile.dsuserver # set server, usrnm, pw, server, of class
         self.username = profile.username
