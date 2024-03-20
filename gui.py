@@ -17,19 +17,25 @@ class Body(tk.Frame):
         self._contacts = [str]
         self._select_callback = recipient_selected_callback
         self.messages = []
-        # After all initialization is complete,
-        # call the _draw method to pack the widgets
-        # into the Body instance
+
         self._draw()
 
     def node_select(self, event=None):
         self.remove_duplicate_msgs()
         # Get the selected item
-        item = self.posts_tree.selection()[0]
+        # item = self.posts_tree.selection()[0]
+
+        selected_items = self.posts_tree.selection()
+        if not selected_items:
+            return
+        item = selected_items[0]
+
         # Get the text of the selected item
         username = self.posts_tree.item(item, 'text')
         # Filter self.messages for messages from this user
-        user_messages = [msg for msg in self.messages if msg.get('from') == username or msg.get('to') == username]
+        user_messages = [
+        msg for msg in self.messages if msg.get('from') == username or msg.get('to') == username
+        ]
         user_messages = sorted(user_messages, key=lambda msg: msg['timestamp'], reverse=True)
         self.entry_editor.delete('1.0', tk.END)
         # Insert the user messages into the entry editor
@@ -82,11 +88,13 @@ class Body(tk.Frame):
 
     def _draw(self):
         posts_frame = tk.Frame(master=self, width=250)
+        posts_frame.configure(bg='gray9')
         posts_frame.pack(fill=tk.BOTH, side=tk.LEFT)
 
-        style = ttk.Style()
-        style.configure("Treeview", font=('Helvetica', 10, 'italic'))
+
         self.posts_tree = ttk.Treeview(posts_frame)
+        styletree = ttk.Style()
+        styletree.configure("Treeview", font=('Helvetica', 10, 'italic'), background='gray9', fieldbackground='gray9', foreground='white')
         self.posts_tree.heading("#0", text="Friends") 
         self.posts_tree.bind("<<TreeviewSelect>>", self.node_select)
         self.posts_tree.pack(fill=tk.BOTH, side=tk.TOP,
@@ -105,12 +113,12 @@ class Body(tk.Frame):
         message_frame.pack(fill=tk.BOTH, side=tk.TOP, expand=False)
 
         self.message_editor = tk.Text(message_frame, width=0, height=5)
-        # self.message_editor.configure(font=('Helvetica', 14, 'bold'))
+        self.message_editor.configure(font=('Helvetica', 14, 'bold'), bg='dark grey', fg='white')
         self.message_editor.pack(fill=tk.BOTH, side=tk.LEFT,
                                  expand=True, padx=0, pady=0)
 
         self.entry_editor = tk.Text(editor_frame, width=0, height=5, bg='seashell2')
-        self.entry_editor.configure(font=('Helvetica', 14, 'normal'))
+        self.entry_editor.configure(font=('Helvetica', 14, 'normal'), bg='gray14', fg='white')
         self.entry_editor.tag_configure('entry-right', justify='right')
         self.entry_editor.tag_configure('entry-left', justify='left')
         self.entry_editor.pack(fill=tk.BOTH, side=tk.LEFT,
@@ -135,13 +143,12 @@ class Footer(tk.Frame):
             self._send_callback()
 
     def _draw(self):
-        save_button = tk.Button(master=self, text="Send", width=20, command=self.send_click)
-        # You must implement this.
-        # Here you must configure the button to bind its click to
-        # the send_click() function.
+        save_button = tk.Button(master=self, text="Send", width=20, command=self.send_click, bg='midnight blue', fg='white')
+        
         save_button.pack(fill=tk.BOTH, side=tk.RIGHT, padx=5, pady=5)
 
         self.footer_label = tk.Label(master=self, text="Ready.")
+        self.footer_label.configure(bg='black', fg='white')
         self.footer_label.pack(fill=tk.BOTH, side=tk.LEFT, padx=5)
 
 class CreateFileDialog(tk.simpledialog.Dialog):
@@ -268,6 +275,8 @@ class MainApp(tk.Frame):
 
     def create_new_file(self):
         dialog = CreateFileDialog(self.root, "Create New Profile")
+        if not dialog.result:
+            return tk.messagebox.showwarning("Please try again", "All fields must be filled out")
         username, password, server = dialog.result
         response = join_server(server, 3021, username, password)
         if response.message == 'Invalid password or username already taken':
@@ -364,6 +373,7 @@ class MainApp(tk.Frame):
                          recipient_selected_callback=self.recipient_selected, messages=self.messages)
         self.body.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
         self.footer = Footer(self.root, send_callback=self.send_message)
+        self.footer.configure(bg='black')
         self.footer.pack(fill=tk.BOTH, side=tk.BOTTOM)
 
 
@@ -373,6 +383,7 @@ if __name__ == "__main__":
 
     style = ttk.Style(main)
     style.theme_use('clam')
+    main.configure(bg='gray9')
     # windll.shcore.SetProcessDpiAwareness(1)
     # 'title' assigns a text value to the Title Bar area of a window.
     main.title("ICS 32 Distributed Social Messenger")
