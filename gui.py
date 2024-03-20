@@ -38,6 +38,8 @@ class Body(tk.Frame):
                 self.insert_contact_message(message['message'])
             else:
                 self.insert_user_message(message['message'])
+        # scroll to most recent message history
+        self.entry_editor.see(tk.END)
 
         self.after(2000, self.node_select)
 
@@ -311,6 +313,7 @@ class MainApp(tk.Frame):
         self.check_new() # start checking for new messages
         self.load_friends(profile) # load friends from profile
         self.body.update_messages(self.messages) # update messages in body class
+        self.body.entry_editor.delete('1.0', tk.END) # clear the entry editor
 
     def load_friends(self, profile):
         self.body.clear_tree()

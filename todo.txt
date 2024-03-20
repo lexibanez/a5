@@ -31,7 +31,7 @@ in the nodeselect, change it so that it loads the messages of the certain user D
 
 add functionality to update friends list when profile is loaded DONE
 
-when there are new messages, add to the screen, dont use node_select, also make sure they are in 
+when there are new messages, add to the screen, dont use node_select, also make sure they are in    DONE
 the dsu file.
 
 
@@ -39,10 +39,10 @@ the dsu file.
 
 FIX WEDNESDAY
 
-- message body only updates when i click the username again, make it so that it updates when the retrieve_new is called.
+- message body only updates when i click the username again, make it so that it updates when the retrieve_new is called. DONE
 
 - fix the issue where the message comes up 3 times, i think it has to do with when it saves to the dsu file. if not, check the body GUI
     ------UPDATE-------
-    when the program retrieves new messages, it saves it to the dsu file 3 times, make it so that it is only once.
+    when the program retrieves new messages, it saves it to the dsu file 3 times, make it so that it is only once.  DONE
 
 - fix the case where the username and password is taken. it might be in the response tuple DONE
