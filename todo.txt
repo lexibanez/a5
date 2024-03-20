@@ -1,14 +1,14 @@
 - handle the case where the user makes a new profile and tries to send a
-message before they put an ip address
+message before they put an ip address DONE
 
-- check if the opened profile has a server ip, and if it does, retrieve all messages
+- check if the opened profile has a server ip, and if it does, retrieve all messages DONE
 
-- add send message functionality, and clear the box once the message is sent
+- add send message functionality, and clear the box once the message is sent DONE
 
-- change colorss
+- change colorss DONE
 
 - make the messages list in order of they were sent, and separate user-sent messages
-from received messages
+from received messages DONE
 
 - storing sent messages FIX THIS
     - implement in the send function of MainApp
@@ -16,16 +16,16 @@ from received messages
     - make a json string in this format
         {"message: "message1, "to": "recipient", "timestamp": "timestamp"}
     - then make a method in the profile class that appends the messages string call it
-    - make sure to add functionality to sort all messages, to and from
+    - make sure to add functionality to sort all messages, to and from DONE
 
-- do not allow the user to edit the message box
+- do not allow the user to edit the message box WHATEVER
 
 {"message": "hello", "to": "lexibanez", "timestamp": "1710872762.7493038"}
 {"message": "this is the second message i sent", "to": "lexibanez", "timestamp": "1710872763.1059914"}
 {"message": "third message", "to": "lexibanez", "timestamp": "1710872765.7942672"}
 {"message": "fourth", "to": "lexibanez", "timestamp": "1710872767.4571958"}
 
-make a load messages function that gets called with check_new DONE-ISH
+make a load messages function that gets called with check_new DONE
 
 in the nodeselect, change it so that it loads the messages of the certain user DONE
 

@@ -41,9 +41,9 @@ class Body(tk.Frame):
         # Insert the user messages into the entry editor
         for message in user_messages:
             if message.get('from') == username:
-                self.insert_contact_message(message['message'])
+                self.insert_contact_message(message['message'], username)
             else:
-                self.insert_user_message(message['message'])
+                self.insert_user_message(message['message'], 'You')
         # scroll to most recent message history
         self.entry_editor.see(tk.END)
 
@@ -59,11 +59,13 @@ class Body(tk.Frame):
             entry = contact[:24] + "..."
         id = self.posts_tree.insert('', id, id, text=contact)
 
-    def insert_user_message(self, message:str):
-        self.entry_editor.insert(1.0, message + '\n', 'entry-right')
+    def insert_user_message(self, message:str, username:str):
+        formatted_message = f"{username}: {message}\n"
+        self.entry_editor.insert(1.0, formatted_message, 'entry-right')
 
-    def insert_contact_message(self, message:str):
-        self.entry_editor.insert(1.0, message + '\n', 'entry-left')
+    def insert_contact_message(self, message:str, username:str):
+        formatted_message = f"{username}: {message}\n"
+        self.entry_editor.insert(1.0, formatted_message, 'entry-left')
 
     def get_text_entry(self) -> str:
         return self.message_editor.get('1.0', 'end').rstrip()
@@ -113,12 +115,12 @@ class Body(tk.Frame):
         message_frame.pack(fill=tk.BOTH, side=tk.TOP, expand=False)
 
         self.message_editor = tk.Text(message_frame, width=0, height=5)
-        self.message_editor.configure(font=('Helvetica', 14, 'bold'), bg='dark grey', fg='white')
+        self.message_editor.configure(font=('Verdana', 14, 'bold'), bg='dark grey', fg='white')
         self.message_editor.pack(fill=tk.BOTH, side=tk.LEFT,
                                  expand=True, padx=0, pady=0)
 
         self.entry_editor = tk.Text(editor_frame, width=0, height=5, bg='seashell2')
-        self.entry_editor.configure(font=('Helvetica', 14, 'normal'), bg='gray14', fg='white')
+        self.entry_editor.configure(font=('Verdana', 14, 'normal'), bg='gray14', fg='white')
         self.entry_editor.tag_configure('entry-right', justify='right')
         self.entry_editor.tag_configure('entry-left', justify='left')
         self.entry_editor.pack(fill=tk.BOTH, side=tk.LEFT,
@@ -205,7 +207,7 @@ class MainApp(tk.Frame):
             return
 
         status = self.direct_messenger.send(str(message), str(recipient))
-        print(status)
+
         if status:
             self.body.message_editor.delete("1.0", tk.END)
             message_dict = {
@@ -256,7 +258,6 @@ class MainApp(tk.Frame):
         
         if self.direct_messenger.dsuserver:
             new_messages = self.direct_messenger.retrieve_new()
-            print(new_messages)
             if new_messages:
                 for message in new_messages:
                     self.messages.append(message) # update messages list in main class

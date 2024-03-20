@@ -129,7 +129,6 @@ def join_server(server, port, username, password):
             resp = recv.readline()
             # extract the server response into a named tuple
             response_tuple = extract_json(resp)
-            print(response_tuple.message)
 
             return response_tuple
 
@@ -156,7 +155,6 @@ def direct_message(server, port, username, password, type = None, recipient = No
     
     if entry:
         response_tuple = send_direct_message(server, port, token, recipient, entry)
-        print(response_tuple.message)
         return response_tuple
 
 
