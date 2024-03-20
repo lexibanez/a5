@@ -37,5 +37,17 @@ class TestDSProtocol(unittest.TestCase):
         # Assert Phase
         self.assertEqual(result.type, 'ok')
 
+    def test_json_decode_error(self):
+        # Organize Phase
+        json_msg = 'this is not a json string'
+
+        # Action Phase
+        result = extract_json(json_msg)
+        result2 = extract_messages(json_msg)
+
+        # Assert Phase
+        self.assertEqual(result, 'json cannot be decoded.')
+        self.assertEqual(result2, 'json cannot be decoded.')
+
 if __name__ == '__main__':
     unittest.main()
