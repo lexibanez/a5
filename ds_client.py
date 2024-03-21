@@ -140,7 +140,9 @@ def join_server(server, port, username, password):
         print('Invalid IP address')
         return False
 
-def direct_message(server, port, username, password, type = None, recipient = None, entry: str = None):
+
+def direct_message(server, port, username, password,
+                   type=None, recipient=None, entry: str = None):
 
     response_tuple = join_server(server, port, username, password)
 
@@ -152,11 +154,11 @@ def direct_message(server, port, username, password, type = None, recipient = No
         return False
 
     token = response_tuple.token
-    
-    if entry:
-        response_tuple = send_direct_message(server, port, token, recipient, entry)
-        return response_tuple
 
+    if entry:
+        response_tuple = send_direct_message(server, port, token,
+                                             recipient, entry)
+        return response_tuple
 
     if type:
         message_request = {
@@ -211,7 +213,7 @@ def send_direct_message(server, port, token, recipient, entry):
             response_tuple = extract_json(response)
 
             return response_tuple
-        
+
     except TimeoutError as e:
         print(e)
         print('Try a different IP or port')

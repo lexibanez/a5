@@ -51,6 +51,5 @@ def extract_messages(json_msg: str):
 
     except json.JSONDecodeError:
         print("Json cannot be decoded.")
-        return 'json cannot be decoded.'
 
     return Messages(msg_type, messages)
