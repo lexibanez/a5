@@ -313,7 +313,6 @@ class MainApp(tk.Frame):
 
     def check_new(self):
         # You must implement this!
-        print('checking new')
         if self.direct_messenger.dsuserver:
             new_messages = self.direct_messenger.retrieve_new()
             if new_messages:
