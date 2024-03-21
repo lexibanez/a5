@@ -313,7 +313,7 @@ class MainApp(tk.Frame):
 
     def check_new(self):
         # You must implement this!
-
+        print('checking new')
         if self.direct_messenger.dsuserver:
             new_messages = self.direct_messenger.retrieve_new()
             if new_messages:
@@ -398,6 +398,12 @@ class MainApp(tk.Frame):
             self.username,
             self.password
         )
+
+        database_messages = self.direct_messenger.retrieve_all()
+        print(type(self.server), type(self.username), type(self.password))
+        self.messages += database_messages
+        self.load_friends_from_database()
+        self.profile.save_profile(self.path)
         try:
             self.check_new()
         except Exception as e:
@@ -406,6 +412,14 @@ class MainApp(tk.Frame):
         self.load_friends(profile)
         self.body.update_messages(self.messages)
         self.body.entry_editor.delete('1.0', tk.END)
+
+    def load_friends_from_database(self):
+        for message in self.profile.messages:
+            sender = message.get('from')
+            if sender:
+                if sender not in self.profile.friends:
+                    self.profile.add_friend(sender)
+                    self.body.insert_contact(sender)
 
     def load_friends(self, profile):
         self.body.clear_tree()
