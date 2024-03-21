@@ -1,17 +1,33 @@
+"""
+This module contains the GUI components for a Direct Messaging Chat
+application.
+
+It uses the tkinter library for the GUI and the ds_messenger and ds_client
+modules for the application's messaging functionality. The main class in this
+module is Body, which represents the main chat window. It contains methods for
+drawing the window, selecting a chat, and updating the chat display.
+
+This module also contains several other classes for different parts of the GUI,
+such as the login window and the contact list.
+"""
+
 import json
 import time
 import tkinter as tk
-from tkinter import ttk, simpledialog, filedialog
-from typing import Text
-from ds_messenger import *
-from Profile import *
+from tkinter import ttk, filedialog
+from ds_messenger import DirectMessenger
+from Profile import Profile, Path
 from ds_client import join_server
 
 # server ip: 168.235.86.101
 
+# pylint: disable=C0116, W0621, W0622, R0913, R0914, R1710, R0902, W0718
+# pylint: disable=W0612, W0613, C0115, E1120, W0611, W0614, R1705
+
 
 class Body(tk.Frame):
-    def __init__(self, root, recipient_selected_callback=None, messages=None):
+    '''This class is used to create the main chat window.'''
+    def __init__(self, root, recipient_selected_callback=None):
         tk.Frame.__init__(self, root)
         self.root = root
         self._contacts = [str]
@@ -438,7 +454,6 @@ class MainApp(tk.Frame):
         self.body = Body(
             self.root,
             recipient_selected_callback=self.recipient_selected,
-            messages=self.messages
         )
         self.body.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
         self.footer = Footer(self.root, send_callback=self.send_message)

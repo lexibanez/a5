@@ -3,13 +3,16 @@ Messaging Chat application. It contains the main function
 that creates the main window for the application and runs
 the main event loop. The main window is created using the tkinter
 library'''
+# pylint: disable=, unused-variable, W0621
 import tkinter as tk
 from tkinter import ttk
 from gui import MainApp
 
 
 def main():
-
+    '''
+    This function creates the main window for the application
+    '''
     main = tk.Tk()
     style = ttk.Style(main)
     style.theme_use('clam')

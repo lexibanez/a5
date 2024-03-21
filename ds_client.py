@@ -6,7 +6,7 @@
 # Lex Ibanez
 # laibanez@uci.edu
 # 70063614
-
+# pylint: disable=C0116, W0621, W0622, R0913, R0914, R1710
 """
 This module contains functions to connect to a DS server and send messages.
 The `send` function takes server details, user credentials, and
@@ -18,7 +18,6 @@ import socket
 import json
 import time
 from ds_protocol import extract_json, extract_messages
-from Profile import Profile
 
 
 def send(server: str, port: int, username: str,

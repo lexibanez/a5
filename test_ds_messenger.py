@@ -1,7 +1,10 @@
+'''this is a test module for the ds_messenger module.'''
 import unittest
 from ds_messenger import DirectMessenger, DirectMessage
+# pylint: disable=C0116
 
 class TestDirectMessenger(unittest.TestCase):
+    '''This is a test class for the ds_messenger module.'''
     def test_direct_message(self):
         # Organize Phase
         recipient = 'lexibanez'
@@ -32,7 +35,7 @@ class TestDirectMessenger(unittest.TestCase):
 
         # Assert Phase
         self.assertTrue(result)
-    
+
     def test_retrieve_new(self):
         # Organize Phase
         server = '168.235.86.101'
@@ -53,11 +56,12 @@ class TestDirectMessenger(unittest.TestCase):
         password = 'passwordlol'
         dmessenger = DirectMessenger(server, username, password)
 
-        #Action Phase
+        # Action Phase
         result = dmessenger.retrieve_all()
 
         # Assert Phase
         self.assertIsInstance(result, list)
+
 
 if __name__ == '__main__':
     unittest.main()

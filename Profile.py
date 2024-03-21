@@ -1,3 +1,4 @@
+'''This is a module for creating and loading dsu profiles'''
 # Profile.py
 #
 # ICS 32
@@ -16,7 +17,7 @@
 # RIGHT NOW, though can you certainly take
 # a look at it if you are curious since we
 # already covered a bit of the JSON format in class.
-#
+# pylint: disable=C0116
 import json
 import time
 from pathlib import Path
@@ -220,22 +221,24 @@ class Profile:
                 raise DsuProfileError(ex)
         else:
             raise DsuFileError()
-        
+
     def add_friend(self, friend: str) -> None:
         if friend not in self.friends:
             self.friends.append(friend)
 
     def add_message(self, message):
         self.messages.append(message)
-    
+
     def configure_friends(self, senders: list):
         for sender in senders:
             self.add_friend(sender)
-    
+
     def add_all_messages(self, messages: list):
         for message in messages:
             self.add_message(message)
-    
+
     def remove_duplicate_messages(self) -> None:
-        message_strs = set(json.dumps(m, sort_keys=True) for m in self.messages)
+        message_strs = set(
+            json.dumps(m, sort_keys=True) for m in self.messages
+        )
         self.messages = [json.loads(s) for s in message_strs]
