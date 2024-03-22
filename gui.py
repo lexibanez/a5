@@ -399,7 +399,6 @@ class MainApp(tk.Frame):
         )
 
         database_messages = self.direct_messenger.retrieve_all()
-        print(type(self.server), type(self.username), type(self.password))
         self.messages += database_messages
         self.load_friends_from_database()
         self.profile.save_profile(self.path)
